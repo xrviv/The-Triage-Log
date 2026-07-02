@@ -439,3 +439,4 @@ newer formats? That turned into its own separate post:
   matters even in a "just learning" context: hide passphrase input, never print or log
   the private key, only ever surface what's needed to prove the point (here, just the
   resulting address).
+ 
