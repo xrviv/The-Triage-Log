@@ -1,0 +1,441 @@
+---"
+title: "Trust, But Verify: Reverse-Engineering a Wallet's Key Derivation
+subtitle: "A hands-on walkthrough using ADAMANT Messenger as a case study"
+date: 2026-07-02 18:48:00 +0800
+categories: [Blogging, Tech, Reproducible Builds, Forensics, Bitcoin]
+author: Danny Garcia
+text_focused: true
+---
+
+# Trust, But Verify: Reverse-Engineering a Wallet's Key Derivation
+
+"Non-custodial" is a claim, not a fact. Any wallet can say your keys never leave your
+device — the only way to actually know is to open the source, find the code that turns
+your seed phrase into a private key, and check it yourself. That's true reverse
+engineering, and it's the same instinct behind WalletScrutiny's reproducible-build work:
+don't trust the label on the box, verify what's inside.
+
+This post walks through doing exactly that for [ADAMANT Messenger](https://adamant.im/),
+an open-source decentralized messenger with a built-in multi-coin wallet (ADM, BTC, ETH,
+DOGE, DASH, USDT, USDC, ERC-20 tokens). The trigger was simple: I exported my passphrase
+from ADAMANT, tried to import it into Electrum as a BTC seed, and got a **completely
+different address** than the one ADAMANT shows me. Same passphrase, two different
+wallets, two different answers for "where is my money." That mismatch is either a red
+flag or a clue — this post is about figuring out which.
+
+---
+
+## Part 1 — The methodology: how do you even start?
+
+You don't need to be a cryptographer or a full-time programmer to do this. You need a
+computer, a terminal (the black-box text window your OS ships with — Terminal on
+macOS, or a shell like bash on Linux), and two free tools: **git** (downloads a copy
+of a project's source code) and **grep** (searches text). Both come pre-installed on
+Linux and macOS; on Windows, install [Git for Windows](https://git-scm.com/download/win),
+which bundles a terminal (Git Bash) with both tools already in it.
+
+### Step 1 — Get the actual source code onto your computer
+
+"Open source" means the company publishes their code on a site like GitHub — but that
+code isn't on your machine yet, and you can't grep a website. The first real step is
+always to download ("clone") a copy of the repository. ADAMANT publishes theirs at
+`github.com/Adamant-im/adamant-im`. To clone it, open your terminal and run:
+
+```bash
+git clone https://github.com/Adamant-im/adamant-im.git
+```
+
+This creates a new folder called `adamant-im` in whatever directory you were in,
+containing a full copy of every source file in the project. Move into it:
+
+```bash
+cd adamant-im
+```
+
+Everything from here on happens inside that folder.
+
+### Step 2 — Frame the question before you start searching
+
+Before touching ADAMANT's code, it helps to separate the mismatch (ADAMANT's address
+vs. Electrum's address, for the same passphrase) into two possibilities:
+
+1. The two apps are using **completely different derivation algorithms** — different
+   math entirely, or
+2. They're using the **same algorithm** but different parameters (a different
+   "derivation path," a different address format, different network settings).
+
+That framing matters because it tells you what you're hunting for isn't "bitcoin code"
+in general — it's specifically the one function that takes a string (your passphrase)
+and turns it into a private key (a secret number that controls funds). That's a much
+smaller target than "the whole wallet app," which for ADAMANT is hundreds of files.
+
+### Step 3 — Where to look in a JS/TS wallet repo
+
+ADAMANT is written in JavaScript/TypeScript (you can tell from the `.js`/`.ts`/`.vue`
+files when you look inside the folder — `ls` or your file manager will show you). Two
+complementary ways to narrow hundreds of files down to the handful that matter:
+
+**1. Look at the folder structure first.** Multi-coin wallet apps almost always
+organize code per-coin or in a shared "coin logic" module. Run `ls src/lib/` inside
+the cloned repo and look for folder names like `wallets/`, `coins/`, `crypto/`, or —
+in ADAMANT's case — `bitcoin/`. That's usually a strong hint before you've read a
+single line of code.
+
+**2. Search ("grep") for the vocabulary of key derivation.** `grep` searches every
+file for a piece of text you give it. The trick is knowing *which* words to search
+for — key-derivation code almost always uses a handful of recognizable terms
+regardless of which wallet app you're looking at:
+
+- `bip39`, `bip32` — names of the standards most wallets use to turn a 12/24-word
+  phrase into keys
+- `hdkey`, `derivePath` — "HD" (Hierarchical Deterministic) wallet code, the
+  mechanism behind those standards
+- `mnemonicToSeed`, `fromPrivateKey` — common function names in crypto libraries
+- `bitcoinjs` — the most popular JavaScript Bitcoin library, and a good sign you've
+  found the right area
+
+Run this from inside the `adamant-im` folder:
+
+```bash
+grep -rniE "bip39|bip32|hdkey|derivePath|mnemonicToSeed|fromPrivateKey|bitcoinjs" \
+  --include="*.js" --include="*.ts" -l
+```
+
+Breaking that command down: `grep` is the search tool; `-r` means "search recursively"
+(every file in every subfolder, not just the current one); `-n` shows line numbers;
+`-i` ignores uppercase/lowercase differences; `-E` allows the `|` ("or") syntax between
+search terms; `--include="*.js"` restricts the search to JavaScript/TypeScript files
+so you're not wading through images or config files; `-l` prints just the filenames
+that matched, not every matching line (useful for a first pass).
+
+Run that *before* reading anything else. It narrows an entire repository (hundreds of
+files) down to 3-5 files worth opening by hand.
+
+### Step 4 — Read the smallest function that touches "passphrase" and "key"
+
+Running that grep against the ADAMANT repo points straight at one file:
+`src/lib/bitcoin/btc-base-api.js`. Open it in any text editor (even a basic one) and
+look for a function — a named, reusable block of code — that takes the passphrase as
+input. Here it is, in full, with nothing trimmed out:
+
+```js
+export function getAccount(crypto, passphrase) {
+  const network = networks[crypto]
+  const pwHash = bitcoin.crypto.sha256(Buffer.from(passphrase))
+  const keyPair = ECPairAPI.fromPrivateKey(pwHash, { network })
+
+  return {
+    network,
+    keyPair,
+    address: bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network }).address
+  }
+}
+```
+
+A quick vocabulary check, since none of this is obvious on a first read:
+
+- **`sha256`** — a hashing function. Feed it any input (here, your passphrase as
+  plain text) and it always produces the exact same 32-byte output for that input,
+  every time, on any computer. That determinism is exactly what makes a wallet
+  "non-custodial": no server is involved, no randomness, just math you can rerun
+  yourself.
+- **secp256k1** — the specific elliptic curve (a type of math used for cryptographic
+  keys) that Bitcoin, and this wallet, build private/public key pairs on. You don't
+  need to understand the curve math — just know that a "private key" for secp256k1
+  is simply a 32-byte number, and the SHA256 output above is exactly 32 bytes, which
+  is why it can be used directly as one.
+- **P2PKH** ("Pay to Public Key Hash") — the oldest, simplest Bitcoin address format,
+  the kind that starts with `1`. There are newer formats, but P2PKH is what this
+  code produces.
+
+So the whole derivation, stripped of jargon, is:
+
+```
+private_key = SHA256(the passphrase, typed exactly as shown, as raw text)
+address     = a Bitcoin "1..." address computed from that private key
+```
+
+No BIP32 master key, no derivation path like `m/44'/0'/0'/0/0`, no PBKDF2 (a
+slow-hashing step BIP39 wallets use). Just one SHA256 hash of the literal
+passphrase text, used directly as a private key.
+
+### A necessary terminology correction: "passphrase" vs. "seed phrase" vs. "BIP39 passphrase"
+
+Before going further, three words that sound similar but mean different things need
+untangling — because ADAMANT's own naming makes this genuinely confusing, even for
+people who already know standard Bitcoin wallet terms.
+
+- **Seed phrase / mnemonic** — the 12 (or 15/18/21/24) words most wallets show you on
+  first setup ("write these down"). These are *generated by the app itself*, drawn
+  from a fixed, public list of exactly 2048 words defined by the BIP39 standard. You
+  don't get to pick them; the app picks them for you from device randomness.
+- **BIP39 passphrase** (sometimes called the "25th word") — a completely separate,
+  *optional* extra secret that some wallets let you add on top of the 12-word
+  mnemonic. Unlike the mnemonic, this one genuinely is user-typed, arbitrary text —
+  any word or sentence you want, not restricted to the 2048-word list. If you set
+  one, it gets mixed into the seed-derivation math alongside the mnemonic; the same
+  12 words plus a different (or missing) passphrase produce a completely different
+  wallet. It exists mainly for plausible deniability (a "decoy" wallet vs. a
+  "real" one, both reachable from the same 12 words).
+- **What ADAMANT calls "passphrase"** — despite the name, this is actually the first
+  thing on this list, not the second. Checking `src/components/PassphraseGenerator.vue`
+  confirms it: `passphrase.value = bip39.generateMnemonic()` — ADAMANT generates it the
+  exact same way a standard BIP39 wallet generates its seed phrase (real entropy, real
+  2048-word list, real checksum, machine-generated, not user-typed). ADAMANT's product
+  team just chose to call their seed phrase a "passphrase" in the UI and the code,
+  which collides with the *actual* BIP39 meaning of that word above. When this post
+  says "ADAMANT passphrase" from here on, it means **ADAMANT's seed phrase** — the
+  12-word mnemonic — not an optional 25th-word extension.
+
+### It gets more interesting: not every coin gets the same treatment
+
+Given that ADAMANT's "passphrase" is a real, valid BIP39 mnemonic, a natural next
+question is whether it's *used* the standard BIP39 way. The answer is: **it depends
+on which coin**, and this is the most surprising thing this investigation turned up.
+
+Grepping `src/lib/` for `mnemonicToSeedSync` (the actual BIP39 function that turns a
+mnemonic into a 64-byte seed) shows three different fates for the same 12 words:
+
+| Coin | Uses BIP39's `mnemonicToSeedSync`? | What happens next | Reproducible in a standard wallet? |
+|---|---|---|---|
+| **BTC / DOGE / DASH** | **No** — skipped entirely | `SHA256(raw mnemonic text)` directly | **Never.** No standard wallet can replicate this; the BIP39 seed step is bypassed altogether. |
+| **ADM** (native coin) | **Yes** (`src/lib/adamant.js`) | Seed is then hashed again with SHA256 and fed into an Ed25519 keypair function (`sodium.crypto_sign_seed_keypair`) — a Lisk-style step, not part of BIP39/32/44 | Only by a wallet that reimplements this exact extra step. (ADAMANT is a fork of Lisk, and this is Lisk's own historical scheme.) |
+| **ETH** (`src/lib/eth-utils.js`) | **Yes** | Standard BIP32 HD derivation — but at a nonstandard path, `m/44'/60'/3'/1/0`, instead of the usual default `m/44'/60'/0'/0/0` | **Only if you manually type that exact custom path.** Any wallet that lets you override the derivation path (MetaMask's advanced settings, Ledger Live, many others) can get there — just not with default settings. |
+
+So "does ADAMANT use BIP39" doesn't have one answer — it's "yes for the seed-generation
+step, on 2 of the 4 coin families it supports, and then each of those two takes its
+own non-default detour afterward." BTC/DOGE/DASH ignore BIP39's machinery from the
+start.
+
+### Why the Electrum import produced a different address
+
+Electrum is a different wallet app entirely — it doesn't read ADAMANT's code, it just
+assumes any 12-word phrase you type in follows the industry-standard recipe called
+**BIP39**. That recipe runs the words through a much heavier process before it ever
+becomes a private key:
+
+```
+seed = PBKDF2-HMAC-SHA512(mnemonic, salt="mnemonic"+passphrase, 2048 rounds)
+master_key = BIP32_from_seed(seed)
+private_key = derive(master_key, "m/44'/0'/0'/0/0")   # or similar
+```
+
+In plain terms: Electrum stretches the words through a slow hashing process 2,048
+times over (PBKDF2), then uses the result to build a whole tree of possible keys
+(BIP32), then picks one specific branch of that tree (the `m/44'/0'/0'/0/0` "path").
+That's a completely different pipeline from ADAMANT's single, direct `SHA256(passphrase)`.
+
+Neither approach is "wrong" cryptographically — they're just incompatible standards,
+like two people using different formulas to convert the same word into a number.
+ADAMANT rolled its own, simpler scheme instead of using BIP39/BIP32, which means
+**BIP39-aware wallets like Electrum can never reproduce an ADAMANT-derived address
+from the same words**, even though both are valid, deterministic, passphrase-derived
+keys.
+
+That's an important nuance for anyone auditing "self-custodial" claims: the *absence*
+of BIP39 compatibility isn't itself proof of custodial risk — the passphrase-derived
+key is still generated and held entirely client-side. But it does mean you can't use
+a generic wallet as an independent cross-check the way you normally could. You have to
+speak the app's own derivation dialect.
+
+### A notable design detail: address reuse across coins
+
+Digging one level further, in `src/lib/bitcoin/networks.js`:
+
+```js
+const nets = {
+  [Cryptos.DOGE]: coininfo.dogecoin.main.toBitcoinJS(),
+  [Cryptos.DASH]: coininfo.dash.main.toBitcoinJS(),
+  [Cryptos.BTC]: coininfo.bitcoin.main.toBitcoinJS()
+}
+```
+
+`getAccount()` is shared across BTC, DOGE, and DASH — meaning **the exact same
+32-byte private key** (`SHA256(passphrase)`) is reused for all three chains. Only the
+network version bytes differ (via the `coininfo` library), which changes the address
+*encoding*, not the underlying key. That's a legitimate, common pattern for
+multi-chain wallets built on secp256k1 (same curve, same private key, different
+address prefixes) — but it's worth knowing, since it means compromising the BTC key
+compromises DOGE and DASH funds too.
+
+---
+
+## Part 2 — Proving it yourself
+
+Reading the code and understanding the algorithm is most of the work, but it isn't the
+proof yet. Anyone can read `getAccount()` and *say* they understand it — the actual
+"trust but verify" moment is writing a second, completely independent implementation of
+that same math, from scratch, using none of ADAMANT's own code, and checking whether it
+produces the exact same address ADAMANT shows you. If it does, that's real, checkable
+proof the key really is computed client-side from your passphrase alone — not proof by
+reading, proof by *reproducing*.
+
+### Why write a second implementation instead of just trusting the read-through
+
+Reading code can mislead you in ways that are easy to miss: a function could look
+correct but never actually get called from the real account-creation flow, there could
+be a second, different code path used in production, or a subtle bug in *my* reading of
+the JavaScript could go unnoticed. An independent reimplementation sidesteps all of
+that — it either produces the address you see in ADAMANT, or it doesn't, with nothing
+left to interpretation.
+
+### Setting up
+
+The script uses the same three public libraries ADAMANT's own code depends on
+(`bitcoinjs-lib`, `ecpair`, `tiny-secp256k1`) — reusing the well-tested cryptography
+those libraries provide is reasonable and doesn't undermine the independence of the
+test, since the whole point is to verify *how ADAMANT calls them*, not to reinvent
+elliptic curve math from first principles. What matters is that none of ADAMANT's own
+source files are imported or reused.
+
+```bash
+mkdir adamant-btc-verify && cd adamant-btc-verify
+npm install bitcoinjs-lib ecpair tiny-secp256k1
+```
+
+That downloads just those three packages (and their own dependencies) into a fresh,
+empty folder — much faster than a full `npm install` inside the cloned ADAMANT repo,
+which would pull in Electron and hundreds of unrelated packages for the full app.
+
+### The script
+
+```js
+import * as bitcoin from 'bitcoinjs-lib'
+import { ECPairFactory } from 'ecpair'
+import * as tinysecp from 'tiny-secp256k1'
+import readline from 'node:readline'
+
+const ECPair = ECPairFactory(tinysecp)
+
+// Reads a line from the terminal without echoing it back to the screen, so your
+// passphrase never appears in your terminal's visible output or scrollback.
+function readPassphraseHidden(promptText) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+    process.stdin.on('data', (char) => {
+      char = char.toString()
+      if (char === '\n' || char === '\r' || char === '') return
+      process.stdout.clearLine(0)
+      readline.cursorTo(process.stdout, 0)
+      process.stdout.write(promptText + '*'.repeat(rl.line.length))
+    })
+    rl.question(promptText, (value) => {
+      rl.close()
+      process.stdout.write('\n')
+      resolve(value)
+    })
+  })
+}
+
+const passphrase = await readPassphraseHidden('Paste your ADAMANT passphrase (hidden): ')
+
+// ---- This block is the exact algorithm from getAccount() in btc-base-api.js ----
+const network = bitcoin.networks.bitcoin
+const pwHash = bitcoin.crypto.sha256(Buffer.from(passphrase))
+const keyPair = ECPair.fromPrivateKey(pwHash, { network })
+const address = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network }).address
+// ----------------------------------------------------------------------------
+
+console.log('\nDerived BTC address:', address)
+```
+
+Two deliberate safety choices worth calling out, since this script is handling real key
+material even though it's just a learning exercise:
+
+- **The passphrase is never echoed to the screen.** `readPassphraseHidden()` intercepts
+  each keystroke and redraws the line as asterisks instead of letting the terminal print
+  what you typed — the same idea as a password field on a website, just implemented by
+  hand since Node's built-in `readline` doesn't hide input on its own.
+- **The private key is never printed, logged, or stored anywhere.** Only the final
+  *address* is shown. The address alone is sufficient proof (it's what you compare
+  against ADAMANT's own display); there's no reason a verification script should ever
+  need to reveal the actual secret it computed along the way.
+
+### Running it
+
+```bash
+node verify-btc-address.mjs
+```
+
+The script prompts for a passphrase, computes the address, and prints it:
+
+```
+Paste your ADAMANT passphrase (hidden): 
+Derived BTC address: 1JTpYrn6TWYjgwk3...
+```
+
+That address is then compared by hand against what ADAMANT itself shows under
+**Wallet → BTC**.
+
+### The result
+
+They matched. Running an independent, from-scratch implementation of the same three
+lines of math — `SHA256(passphrase)` → private key → P2PKH address — using different
+code, on a different machine process, with no connection to ADAMANT's app whatsoever,
+produced the identical Bitcoin address ADAMANT displays for that same passphrase.
+
+That's the actual proof this whole post has been building toward: the BTC key isn't
+generated on a server, isn't something ADAMANT's company could quietly recreate or
+withhold, and isn't hidden behind proprietary logic. It's fully determined by one thing
+— the passphrase — and computable by anyone who reads the (public, open) source code
+closely enough to reimplement it. That's what "non-custodial" is supposed to mean, and
+now it isn't just a claim on ADAMANT's website — it's something checked, independently,
+end to end.
+
+---
+
+## One more nuance: non-custodial isn't the same as portable
+
+It's tempting to stop at "the address matched, so this is fine" — but there's a real
+cost to ADAMANT's custom derivation scheme that a match test alone doesn't capture:
+**you can only recover these funds using ADAMANT's own software.** A standard BIP39
+wallet's whole selling point is that your 12 words work in *any* compliant wallet —
+Electrum, Sparrow, a hardware wallet, whatever you want, forever, even if the original
+company disappears. ADAMANT's passphrase only ever produces the right BTC address
+inside ADAMANT itself (or a from-scratch reimplementation like the one above). If
+ADAMANT the project ever shuts down and nobody's kept a copy of this derivation logic,
+recovering those funds gets a lot harder — not impossible (the algorithm is public,
+in the open-source repo, forever, as long as someone can find and run it), but nothing
+close to "type your words into any wallet."
+
+That's a genuine, separate axis from custody, worth being clear-eyed about: **your
+funds are non-custodial, but not portable.** Checked WalletScrutiny's own definitions
+for both (`custodial.yml` and the `hd` entry in `features.yml`) — the custody
+question is narrowly "does the provider hold your keys," which ADAMANT passes cleanly,
+while the *portability* question already has its own, separate feature flag (`hd`),
+which correctly isn't claimed for ADAMANT here. Two different questions, two different
+answers, and it's worth asking both about any wallet, not just the custody one.
+
+(Curious why ADAMANT still generates old-style `1...` Bitcoin addresses instead of
+newer formats? That turned into its own separate post:
+[Why Does a Bitcoin Address Start With 1, 3, or bc1?](./bitcoin-address-formats-explained.md))
+
+---
+
+## Takeaways
+
+- "Non-custodial" claims are verifiable, not just trustable — the actual proof lives in
+  a handful of lines of derivation code, and it's provable by reproducing it
+  independently, not just by reading and nodding along.
+- Finding that code is a search problem before it's a reading problem: grep for the
+  vocabulary (`bip39`, `bip32`, `hdkey`, `sha256`, `fromPrivateKey`) before opening files.
+  Any wallet's derivation is a small, greppable target inside a much larger app.
+- A failed cross-wallet import (e.g. ADAMANT → Electrum) is not automatically a red
+  flag — it can simply mean the app uses a non-standard (non-BIP39) derivation scheme.
+  The mismatch is a clue to keep digging, not a verdict on its own.
+- Don't trust a wallet's own vocabulary. ADAMANT calls its seed phrase a "passphrase,"
+  which collides with the *actual* BIP39 term for a completely different, optional
+  thing (an extra user-typed secret on top of a seed phrase). Always confirm what a
+  word means in *this specific app's code*, not what it means industry-wide.
+- "Does this wallet use BIP39" can be true for some of its coins and false for others,
+  in the same app, from the same 12 words. ADAMANT's BTC/DOGE/DASH skip BIP39's seed
+  step entirely; ADM and ETH use it, then each diverges from the standard afterward in
+  its own way. Check every coin's path separately — don't generalize from one.
+- Non-custodial and portable are two different questions with two different answers.
+  ADAMANT passes the first cleanly and fails the second — funds are genuinely
+  self-controlled, but only recoverable through ADAMANT's own (open-source) code, not
+  any standard wallet. Ask both questions about any wallet you're evaluating.
+- When writing a verification script that touches real key material, treat it like it
+  matters even in a "just learning" context: hide passphrase input, never print or log
+  the private key, only ever surface what's needed to prove the point (here, just the
+  resulting address).
