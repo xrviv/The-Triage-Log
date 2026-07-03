@@ -26,3 +26,6 @@ package-lock.json
 *~
 .DS_Store
 Thumbs.db
+
+# Local notes for AI assistants (not for publication)
+CLAUDE.md
