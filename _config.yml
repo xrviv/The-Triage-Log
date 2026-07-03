@@ -17,6 +17,7 @@ description: >-
   Deep dives into reverse engineering, forensics, reproducible builds, and blockchain tech.
 
 url: "https://xrviv.github.io"
+baseurl: "/The-Triage-Log"
 
 github:
   username: xrviv 

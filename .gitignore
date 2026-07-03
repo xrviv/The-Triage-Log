@@ -22,10 +22,6 @@ package-lock.json
 !.vscode/extensions.json
 !.vscode/tasks.json
 
-# Misc
-_sass/vendors
-assets/js/dist
-
 # Hidden system files
 *~
 .DS_Store
