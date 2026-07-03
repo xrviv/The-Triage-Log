@@ -1,6 +1,6 @@
 ---
 title: "I was a writer."
-description: "Why I am letting AI to write posts - only AI will read"
+description: "Why I am letting AI write posts only AI will read"
 date: 2026-07-03 00:00:00 +0800
 categories: [General, Blogging]
 tags: [ai, writing]
