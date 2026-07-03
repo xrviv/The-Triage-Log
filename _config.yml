@@ -18,15 +18,27 @@ description: >-
 
 url: "https://xrviv.github.io"
 baseurl: "/The-Triage-Log"
+paginate: 10
 
 github:
   username: xrviv 
 
 twitter:
-  username: # Your twitter handle (or leave blank/delete line if you don't use it)
+  username: dannybuntu # Your twitter handle (or leave blank/delete line if you don't use it)
 
 social:
-  name: Danny Garcia # This fixes the copyright/footer name
-  email: your-email@domain.com 
+  name: Daniel Andrei R. Garcia # This fixes the copyright/footer name
+  email: dannybuntu@proton.me 
   links:
     - https://github.com/xrviv # Your primary link
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+  - scope:
+      path: ""
+    values:
+      layout: default

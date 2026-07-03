@@ -1,10 +1,9 @@
 ---
 title: "Trust, But Verify: Reverse-Engineering a Wallet's Key Derivation"
-subtitle: "A hands-on walkthrough using ADAMANT Messenger as a case study"
+description: "A hands-on walkthrough using ADAMANT Messenger as a case study"
 date: 2026-07-02 18:48:00 +0800
-categories: [Blogging, Tech, Reproducible Builds, Forensics, Bitcoin]
-author: Danny Garcia
-text_focused: true
+categories: [Blogging, Tech]
+tags: [reproducible-builds, walletscrutiny, forensics, bitcoin]
 ---
 
 # Trust, But Verify: Reverse-Engineering a Wallet's Key Derivation
