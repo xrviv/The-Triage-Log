@@ -1,0 +1,31 @@
+---
+---
+
+@use 'abstracts/variables' with (
+  $theme: '{{ site.theme_mode }}'
+);
+
+/* prettier-ignore */
+@use 'main
+{%- if jekyll.environment == 'production' -%}
+  .bundle
+{%- endif -%}
+';
+
+/* append your custom style below */
+
+// Fix: Chirpy's _includes/refactor-content.html deliberately strips the
+// <pre class="highlight"> wrapper from every rendered code block ("Fixed
+// kramdown code highlight rendering"), leaving bare <div class="highlight">
+// <code>...</code></div>. But _sass/base/_syntax.scss's ".highlight pre {}"
+// rule still assumes a <pre> exists -- and more importantly, browsers only
+// apply `white-space: pre` automatically to actual <pre> elements, not to a
+// bare <code>. Without a <pre>, every newline inside a code block collapses
+// to a single space when rendered, making code blocks unreadable and not
+// copy-pasteable, even though the underlying HTML has real newlines. Plain
+// `pre` (not `pre-wrap`) matches .highlight's existing `overflow: auto`,
+// which was already built for horizontal-scrolling long lines. See CLAUDE.md
+// for the full investigation (2026-07-03).
+.highlight code {
+  white-space: pre;
+}
