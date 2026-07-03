@@ -61,3 +61,15 @@ jekyll-archives:
   permalinks:
     tag: /tags/:name/
     category: /categories/:name/
+
+# Chirpy's default layout pipes every page through its bundled HTML minifier
+# (_layouts/compress.html), which only preserves whitespace inside literal
+# <pre>...</pre> tags. Chirpy's own code-block markup doesn't use <pre> (it's
+# <div class="highlight"><code>...) so the minifier collapses every newline
+# inside every code block on the site into a single space -- code stops being
+# readable or copy-pasteable. Disabling compression sitewide fixes this for
+# all posts, current and future.
+compress_html:
+  ignore:
+    envs: 'all' # must be the bare string "all", not a list -- compress.html checks
+                # `site.compress_html.ignore.envs == "all"` via direct equality
