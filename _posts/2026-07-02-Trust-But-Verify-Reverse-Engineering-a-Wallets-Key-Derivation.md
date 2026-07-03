@@ -405,10 +405,6 @@ while the *portability* question already has its own, separate feature flag (`hd
 which correctly isn't claimed for ADAMANT here. Two different questions, two different
 answers, and it's worth asking both about any wallet, not just the custody one.
 
-(Curious why ADAMANT still generates old-style `1...` Bitcoin addresses instead of
-newer formats? That turned into its own separate post:
-[Why Does a Bitcoin Address Start With 1, 3, or bc1?](./bitcoin-address-formats-explained.md))
-
 ---
 
 ## Takeaways
