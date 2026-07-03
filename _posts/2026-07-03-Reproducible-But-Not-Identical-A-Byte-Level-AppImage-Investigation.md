@@ -22,6 +22,11 @@ have the same SHA-256 hash. Does that mean the build is not reproducible — i.e
 the developer could have secretly shipped something different from what the public
 source code produces? Or does it mean something more mundane?
 
+This investigation fed directly into WalletScrutiny's [published verification report
+for this release](https://walletscrutiny.com/desktop/adamant.im/#verificationId=32a5aae66e7db6cf7693f92246ad595d30f1f777a80fc089aca1cd30f348d445),
+and the root cause traced below was filed as [an issue against ADAMANT's own
+repository](https://github.com/Adamant-im/adamant-im/issues/957).
+
 You do not need any prior experience with AppImages, SquashFS, or binary reverse
 engineering to follow this. Every command below is something you can run yourself and
 see the same thing. Where domain knowledge is needed (like "what is a SquashFS
