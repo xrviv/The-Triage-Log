@@ -20,6 +20,11 @@ url: "https://xrviv.github.io"
 baseurl: "/The-Triage-Log"
 paginate: 10
 
+collections:
+  tabs:
+    output: true
+    sort_by: order
+
 github:
   username: xrviv 
 
@@ -38,6 +43,11 @@ defaults:
       type: posts
     values:
       layout: post
+  - scope:
+      path: ""
+      type: tabs
+    values:
+      permalink: /:title/
   - scope:
       path: ""
     values:
