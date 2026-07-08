@@ -21,8 +21,8 @@ built on Spark — a newer Bitcoin layer-2 system — actually implements "unila
 in practice, meaning users fully trust a third party regardless of what the underlying
 protocol claims to support. [Francis Pouliot](https://x.com/francispouliot_/status/2074651604943245529),
 CEO of Bull Bitcoin, agreed: "a Spark wallet is pretty much a custodial wallet unless
-you can actually exit unilaterally if the servers go down." Strong claims, no receipts —
-so [WalletScrutiny](https://walletscrutiny.com/) picked one Spark-based wallet, **Radar**
+you can actually exit unilaterally if the servers go down."
+[WalletScrutiny](https://walletscrutiny.com/) picked one Spark-based wallet, **Radar**
 ("Radar: Chat & Bitcoin," a Signal fork adding Bitcoin payments), and went and checked.
 Key technical claims below are backed by exact source-code citations, not a press
 release — a few broader statements (repo-wide searches that turned up nothing, issue
