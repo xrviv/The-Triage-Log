@@ -134,22 +134,42 @@ the bytes match
 ([`Entropy.asMnemonic()`](https://github.com/radar-labs/radar-android/blob/4a6e9f8f2adf914c97f951c81c80ad41c710a26d/app/src/main/java/org/thoughtcrime/securesms/payments/Entropy.java#L49)).
 Typing the words back in reverses that exact operation. Clean, standard, textbook BIP-39.
 
-iOS generates the phrase the same way, but its *restore* path is a genuinely interesting
-detour. When you re-enter a phrase, iOS doesn't decode it back into the original random
-bytes the way Android does — it runs the words through
+iOS creation follows the same entropy-to-mnemonic path, both for the phrase actually
+shown to the user
+([`PaymentsImpl.passphrase(forPaymentsEntropy:)`](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalUI/Payments/PaymentsImpl.swift#L401-L405))
+and for initializing the SDK
+([`BreezSdkExt.build`](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalUI/Payments/BreezSdkExt.swift#L11-L17))
+— though that second function's own comment is stale, still describing "32 bytes" and a
+"24-word mnemonic" when the current constant is 16 bytes / 12 words. Creation itself
+isn't affected; it's just a leftover comment worth flagging.
+
+Its *restore* path is a different matter — it calls the wrong function, and unlike the
+question of whether the SDK exports a unilateral-exit call, this one is fully checkable
+from source. When you re-enter a phrase, iOS doesn't decode it back into
+the original random bytes the way Android does — it runs the words through
 [`MnemonicSwift.Mnemonic.deterministicSeedBytes(...)`](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalUI/Payments/PaymentsImpl.swift#L412),
 which traces back to a
 [`PBKDF2SHA512` call](https://github.com/zcash/swift-bip39/blob/2d7f3e76e904621e111efada6cc9575f39543bb2/MnemonicSwift/Mnemonic.swift#L119-L135)
 inside the underlying [`zcash/swift-bip39`](https://github.com/zcash/swift-bip39) library,
 [implemented here](https://github.com/zcash/swift-bip39/blob/2d7f3e76e904621e111efada6cc9575f39543bb2/MnemonicSwift/PKC5.swift#L16-L27)
-using Apple's CommonCrypto PBKDF2 with the SHA-512 PRF. That's a real,
-standard BIP-39 operation — but it's the *seed-derivation* function (used for deriving
-keys), not the *entropy-recovery* function Android uses. The output then gets stored
-under the same field name used for the original entropy, and re-encoded into a brand-new
-mnemonic to reconnect to the wallet — a different mnemonic than the one you actually
-typed in. Whether that still reliably reconnects to the identical wallet isn't something
-a source read alone can settle; it would need an actual device test. Filing that one
-under "open question," not "bug" or "fine" — the honest answer is: unconfirmed.
+using Apple's CommonCrypto PBKDF2 with the SHA-512 PRF. That's a real, standard BIP-39
+operation — the *seed-derivation* function used for deriving keys — but not the
+*entropy-recovery* function Android uses, and it hands back the wrong size: BIP-39 seed
+derivation always produces a 512-bit, 64-byte value, never the 16 or 32 bytes Radar's own
+entropy field accepts
+([`PaymentsConstants.supportedPaymentsEntropyLengths`](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalServiceKit/Payments/Payments+SSK.swift#L245)).
+That length check lives in
+[`PaymentsState.build`](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalServiceKit/Payments/PaymentsHelper.swift#L99-L113),
+which silently falls back to `.disabled` instead of storing the oversized value — so the
+Breez SDK is never actually initialized with it. But the restore flow's own success check
+doesn't notice: `enablePayments(withPaymentsEntropy:)` returns `true`
+[regardless of whether the length check passed](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/SignalServiceKit/Payments/PaymentsHelperImpl.swift#L129-L143),
+so the
+[restore-complete screen tells the user it worked](https://github.com/radar-labs/Radar/blob/d997428ba36916d5466dc3451f31de703d2034be/Signal/src/ViewControllers/AppSettings/Payments/PaymentsRestoreWalletCompleteViewController.swift#L162-L181)
+while payments quietly stay disabled. That's a static-source finding, not a guess — the
+one thing an actual device test would still add is confirming exactly what the user sees
+afterward (presumably a silently-disabled Payments tab), not whether the restore itself
+succeeds. It doesn't.
 
 Here's the distinction that matters regardless of that iOS detail: even in the best
 case, where the phrase restores the wallet perfectly, that only gets you back into your
@@ -193,10 +213,11 @@ depending on.
   Radar's apps don't configure their own Spark infrastructure — they use the SDK's
   default, which pools three completely different companies (Lightspark, Breez,
   Flashnet). Read the actual configuration instead of assuming.
-- Some questions genuinely can't be settled by reading source alone. Whether iOS's
-  restore path reliably reconnects to the identical wallet needs a device test this
-  investigation didn't run. Saying "unconfirmed" honestly is more useful than guessing
-  in either direction.
+- Not every question needs a device test — but check before assuming one does. This post
+  originally filed iOS's restore path as unconfirmed pending hands-on testing; tracing
+  the actual entropy-length check and the restore screen's success path showed the
+  mechanism was fully verifiable from source. iOS's phrase restore silently fails, and
+  the app tells the user it succeeded anyway.
 
 Full technical writeup, with every citation, lives on WalletScrutiny's
 [Radar entry](https://walletscrutiny.com/mobile/com.cakelabs.signal/).
