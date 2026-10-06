@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">A Spark exit: a fire escape, not a door</title>
+  <desc id="d">Five steps. First, save the exit data while the operators are still online. Second, the operators stop answering. Third, broadcast the pre-signed exit transactions, one tree level per block. Fourth, wait out a timelock of about 1,400 to 2,000 blocks, roughly 10 to 14 days. Fifth, sweep the coins to your own address. Without step one, none of the later steps is possible.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#a9a8a3"/></marker>
+  </defs>
+  <rect x="1" y="1" width="878" height="298" rx="14" fill="#fcfcfb" stroke="#e4e3df" stroke-width="2"/>
+  <text x="32" y="46" font-size="22" font-weight="700" fill="#0b0b0b">A Spark exit: a fire escape, not a door</text>
+  <text x="32" y="72" font-size="14" fill="#52514e">What leaving without the operators takes, in order.</text>
+
+  <g font-size="13" text-anchor="middle">
+    <!-- step 1: before -->
+    <rect x="32" y="100" width="150" height="128" rx="10" fill="#2a78d6"/>
+    <text x="107" y="126" fill="#ffffff" font-weight="700" font-size="14">1. Before</text>
+    <text x="107" y="152" fill="#ffffff">Save the exit data</text>
+    <text x="107" y="170" fill="#ffffff">("recovery bundle")</text>
+    <text x="107" y="188" fill="#ffffff">while the operators</text>
+    <text x="107" y="206" fill="#ffffff">are still online</text>
+
+    <!-- step 2 -->
+    <rect x="200" y="100" width="150" height="128" rx="10" fill="#ecebe7"/>
+    <text x="275" y="126" fill="#0b0b0b" font-weight="700" font-size="14">2. Operators</text>
+    <text x="275" y="144" fill="#0b0b0b" font-weight="700" font-size="14">go quiet</text>
+    <text x="275" y="170" fill="#52514e">Outage, shutdown,</text>
+    <text x="275" y="188" fill="#52514e">or refusal to</text>
+    <text x="275" y="206" fill="#52514e">serve you</text>
+
+    <!-- step 3 -->
+    <rect x="368" y="100" width="150" height="128" rx="10" fill="#ecebe7"/>
+    <text x="443" y="126" fill="#0b0b0b" font-weight="700" font-size="14">3. Broadcast</text>
+    <text x="443" y="152" fill="#52514e">Pre-signed exit</text>
+    <text x="443" y="170" fill="#52514e">transactions, one</text>
+    <text x="443" y="188" fill="#52514e">tree level per block</text>
+    <text x="443" y="206" fill="#52514e">(hours)</text>
+
+    <!-- step 4 -->
+    <rect x="536" y="100" width="150" height="128" rx="10" fill="#ecebe7"/>
+    <text x="611" y="126" fill="#0b0b0b" font-weight="700" font-size="14">4. Wait</text>
+    <text x="611" y="152" fill="#52514e">Timelock of about</text>
+    <text x="611" y="170" fill="#52514e">1,400–2,000 blocks</text>
+    <text x="611" y="188" fill="#0b0b0b" font-weight="700">≈ 10–14 days</text>
+
+    <!-- step 5 -->
+    <rect x="704" y="100" width="144" height="128" rx="10" fill="#ecebe7"/>
+    <text x="776" y="126" fill="#0b0b0b" font-weight="700" font-size="14">5. Sweep</text>
+    <text x="776" y="152" fill="#52514e">Move the coins</text>
+    <text x="776" y="170" fill="#52514e">to your own</text>
+    <text x="776" y="188" fill="#52514e">address</text>
+  </g>
+
+  <g fill="#a9a8a3">
+    <path d="M185 157 L197 164 L185 171 z"/>
+    <path d="M353 157 L365 164 L353 171 z"/>
+    <path d="M521 157 L533 164 L521 171 z"/>
+    <path d="M689 157 L701 164 L689 171 z"/>
+  </g>
+
+  <text x="32" y="258" font-size="13" font-weight="700" fill="#0b0b0b">Skip step 1 and steps 3–5 are impossible: the seed alone cannot find your current leaves.</text>
+  <text x="32" y="280" font-size="12" fill="#6f6e69">Fees for step 3 come from a separate on-chain coin. Source: Blink mainnet case study (2026-07-13).</text>
+</svg>

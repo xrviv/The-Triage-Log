@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="880" height="380" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Same balance on screen, different money you can get back</title>
+  <desc id="d">Three wallets each show a balance of 100,000 sats. If the operators stop answering, Lucy (Blink-style setup with saved exit data, 1 sat per vbyte) can recover about 89,700 sats. Francis's test at 1.25 sat per vbyte recovered about 70,000 sats. Bob, whose wallet never saved exit data, can recover 0 sats.</desc>
+  <rect x="1" y="1" width="878" height="378" rx="14" fill="#fcfcfb" stroke="#e4e3df" stroke-width="2"/>
+  <text x="32" y="46" font-size="22" font-weight="700" fill="#0b0b0b">Same balance on screen, different money you can get back</text>
+  <text x="32" y="72" font-size="14" fill="#52514e">Each wallet shows 100,000 sats. Bars show what could reach your own Bitcoin address if the operators stop answering.</text>
+
+  <!-- scale: x=250 → 0, x=810 → 100,000 (5.6 px per 1,000 sats) -->
+  <g font-size="12" fill="#6f6e69" text-anchor="middle">
+    <line x1="250" y1="104" x2="250" y2="320" stroke="#e4e3df"/>
+    <line x1="530" y1="104" x2="530" y2="320" stroke="#e4e3df" stroke-dasharray="3 4"/>
+    <line x1="810" y1="104" x2="810" y2="320" stroke="#e4e3df" stroke-dasharray="3 4"/>
+    <text x="250" y="340">0</text><text x="530" y="340">50,000</text><text x="810" y="340">100,000 sats</text>
+  </g>
+
+  <!-- Lucy -->
+  <text x="32" y="134" font-size="15" font-weight="700" fill="#0b0b0b">Lucy</text>
+  <text x="32" y="153" font-size="12" fill="#52514e">exit data saved, 1 sat/vB</text>
+  <rect x="250" y="122" width="560" height="30" rx="4" fill="#ecebe7"/>
+  <rect x="250" y="122" width="502" height="30" rx="4" fill="#2a78d6"/>
+  <text x="742" y="142" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">≈ 89,700</text>
+
+  <!-- Francis -->
+  <text x="32" y="204" font-size="15" font-weight="700" fill="#0b0b0b">Francis's test</text>
+  <text x="32" y="223" font-size="12" fill="#52514e">1.25 sat/vB</text>
+  <rect x="250" y="192" width="560" height="30" rx="4" fill="#ecebe7"/>
+  <rect x="250" y="192" width="392" height="30" rx="4" fill="#2a78d6"/>
+  <text x="632" y="212" font-size="14" font-weight="700" fill="#ffffff" text-anchor="end">≈ 70,000</text>
+
+  <!-- Bob -->
+  <text x="32" y="274" font-size="15" font-weight="700" fill="#0b0b0b">Bob</text>
+  <text x="32" y="293" font-size="12" fill="#52514e">no exit data saved</text>
+  <rect x="250" y="262" width="560" height="30" rx="4" fill="#ecebe7"/>
+  <text x="262" y="282" font-size="14" font-weight="700" fill="#0b0b0b">0: nothing he can move on his own</text>
+
+  <text x="32" y="366" font-size="12" fill="#6f6e69">Sources: Blink mainnet case study (2026-07-13); Francis Pouliot's test as discussed on X (2026-09-22). Grey = shown in the app but not recoverable.</text>
+</svg>

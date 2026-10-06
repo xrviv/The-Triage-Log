@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Where 100,000 sats go in a real Spark exit</title>
+  <desc id="d">Blink's mainnet exit at 1 sat per vbyte: 89,668 sats arrived at the destination, 9,888 sats were left behind in Spark as 18 dust leaves not worth exiting, and 444 sats went to sweep fees. Separately, 8,388 sats of exit fees were paid from a different on-chain coin.</desc>
+  <rect x="1" y="1" width="878" height="298" rx="14" fill="#fcfcfb" stroke="#e4e3df" stroke-width="2"/>
+  <text x="32" y="46" font-size="22" font-weight="700" fill="#0b0b0b">Where 100,000 sats go in a real Spark exit</text>
+  <text x="32" y="72" font-size="14" fill="#52514e">Blink's mainnet test at 1 sat/vB: 22 leaves, only 4 worth exiting.</text>
+
+  <!-- bar: x 32 → 848 = 816 px for 100,000 sats; 2px surface gaps between segments -->
+  <rect x="32" y="104" width="731" height="44" rx="4" fill="#2a78d6"/>
+  <rect x="765" y="104" width="79" height="44" fill="#eb6834"/>
+  <rect x="846" y="104" width="2" height="44" rx="1" fill="#1baf7a"/>
+
+  <!-- labels -->
+  <text x="48" y="132" font-size="16" font-weight="700" fill="#ffffff">89,668 sats arrive in your wallet</text>
+
+  <line x1="804" y1="150" x2="804" y2="180" stroke="#52514e" stroke-width="1.5"/>
+  <text x="848" y="198" font-size="14" font-weight="700" fill="#0b0b0b" text-anchor="end">9,888 left behind in Spark</text>
+  <text x="848" y="216" font-size="13" fill="#52514e" text-anchor="end">18 dust leaves that cost more to exit than they hold</text>
+
+  <line x1="847" y1="100" x2="847" y2="88" stroke="#52514e" stroke-width="1.5"/>
+  <text x="848" y="84" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="end">444 sweep fees</text>
+
+  <!-- separate fee coin -->
+  <rect x="32" y="240" width="14" height="14" rx="3" fill="none" stroke="#52514e" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <text x="56" y="252" font-size="13" fill="#0b0b0b">Not in the bar: 8,388 sats of exit fees, paid from a separate on-chain coin you must already own.</text>
+  <text x="32" y="280" font-size="12" fill="#6f6e69">Source: Blink, "Case study: a real Spark unilateral exit on Bitcoin mainnet" (2026-07-13). Exiting all 22 leaves would have cost about 79% in fees.</text>
+</svg>

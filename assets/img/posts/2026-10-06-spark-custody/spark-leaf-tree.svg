@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 470" width="880" height="470" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">How a Spark balance is held</title>
+  <desc id="d">One on-chain Bitcoin UTXO is split into a tree. Each leaf is a slice of the user's balance, locked to the user's key together with the operators' key. Normally the operators co-sign every transfer or withdrawal. If they stop answering, each leaf has a pre-signed exit path that is broadcast level by level and then waits out a timelock before the coins reach the user's own address.</desc>
+  <rect x="1" y="1" width="878" height="468" rx="14" fill="#fcfcfb" stroke="#e4e3df" stroke-width="2"/>
+  <text x="32" y="46" font-size="22" font-weight="700" fill="#0b0b0b">How a Spark balance is held</text>
+  <text x="32" y="72" font-size="14" fill="#52514e">Your balance is a set of "leaves" in a tree that starts from one on-chain Bitcoin output.</text>
+
+  <!-- tree edges -->
+  <g stroke="#a9a8a3" stroke-width="2" fill="none">
+    <path d="M300 136 L180 196"/><path d="M300 136 L420 196"/>
+    <path d="M180 226 L120 296"/><path d="M180 226 L240 296"/>
+    <path d="M420 226 L360 296"/><path d="M420 226 L480 296"/>
+  </g>
+
+  <!-- root -->
+  <rect x="200" y="96" width="200" height="40" rx="8" fill="#0b0b0b"/>
+  <text x="300" y="121" font-size="14" font-weight="600" fill="#ffffff" text-anchor="middle">On-chain UTXO (Bitcoin)</text>
+
+  <!-- branches -->
+  <rect x="130" y="196" width="100" height="30" rx="6" fill="#e9e8e4"/>
+  <text x="180" y="216" font-size="13" fill="#52514e" text-anchor="middle">branch</text>
+  <rect x="370" y="196" width="100" height="30" rx="6" fill="#e9e8e4"/>
+  <text x="420" y="216" font-size="13" fill="#52514e" text-anchor="middle">branch</text>
+
+  <!-- leaves -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="72" y="296" width="96" height="46" rx="8" fill="#2a78d6"/>
+    <text x="120" y="317" fill="#ffffff" font-weight="600">leaf</text>
+    <text x="120" y="334" fill="#ffffff">32,768 sats</text>
+    <rect x="192" y="296" width="96" height="46" rx="8" fill="#2a78d6"/>
+    <text x="240" y="317" fill="#ffffff" font-weight="600">leaf</text>
+    <text x="240" y="334" fill="#ffffff">16,384 sats</text>
+    <rect x="312" y="296" width="96" height="46" rx="8" fill="#2a78d6"/>
+    <text x="360" y="317" fill="#ffffff" font-weight="600">leaf</text>
+    <text x="360" y="334" fill="#ffffff">8,192 sats</text>
+    <rect x="432" y="296" width="96" height="46" rx="8" fill="#eb6834"/>
+    <text x="480" y="317" fill="#ffffff" font-weight="600">dust leaf</text>
+    <text x="480" y="334" fill="#ffffff">12 sats</text>
+  </g>
+  <text x="300" y="370" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="middle">Each leaf is locked to your key + the operators' key.</text>
+  <text x="300" y="389" font-size="13" fill="#52514e" text-anchor="middle">Leaf sizes are illustrative.</text>
+
+  <!-- right panel: two paths -->
+  <line x1="590" y1="96" x2="590" y2="440" stroke="#e4e3df" stroke-width="2"/>
+  <text x="614" y="112" font-size="15" font-weight="700" fill="#0b0b0b">Normal path</text>
+  <text x="614" y="134" font-size="13" fill="#52514e">The operators co-sign every</text>
+  <text x="614" y="152" font-size="13" fill="#52514e">payment and withdrawal.</text>
+  <text x="614" y="170" font-size="13" fill="#52514e">Fast and cheap, but only while</text>
+  <text x="614" y="188" font-size="13" fill="#52514e">they answer.</text>
+
+  <text x="614" y="232" font-size="15" font-weight="700" fill="#0b0b0b">Exit path (unilateral)</text>
+  <g font-size="13" fill="#52514e">
+    <text x="614" y="256">1. Pre-signed transactions,</text>
+    <text x="630" y="274">one tree level per block</text>
+    <text x="614" y="298">2. A timelock of about</text>
+    <text x="630" y="316">10–14 days</text>
+    <text x="614" y="340">3. Sweep to your own address</text>
+    <text x="614" y="372">Needs exit data saved while</text>
+    <text x="614" y="390">the operators were online, and</text>
+    <text x="614" y="408">fees from a separate coin.</text>
+  </g>
+</svg>
