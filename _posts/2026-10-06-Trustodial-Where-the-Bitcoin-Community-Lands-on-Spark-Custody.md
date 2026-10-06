@@ -42,7 +42,7 @@ Blink's case study (<https://www.blink.sv/blog/case-study-spark-unilateral-exit-
 
 ![Where 100,000 sats go in Blink's mainnet exit at 1 sat/vB: 89,668 arrive, 9,888 are left behind as dust leaves, 444 go to sweep fees, and 8,388 sats of exit fees come from a separate coin.](/assets/img/posts/2026-10-06-spark-custody/where-lucys-sats-go.svg)
 
-Francis Pouliot's test of September 2026, which Leo discussed with him on X on 2026-09-21/22, came out harsher at almost the same fee rate (1.25 sat/vB against Blink's 1 sat/vB): about 30 % of 100,000 sats lost, about 18,000 left behind as uneconomical leaves. The difference lies in how each balance was split into leaves. At 10 sat/vB, exiting all his leaves would have cost 1.4 million sats. Leo's response was a rule rather than a label: "0 % / 100 % / else", and a wallet should show "an exit and a sats price tag at all times without internet".
+Francis Pouliot's test of September 2026, which Leo discussed with him on X on 2026-09-21/22 (<https://x.com/francispouliot_/status/2102117633139290533>), came out harsher at almost the same fee rate (1.25 sat/vB against Blink's 1 sat/vB): about 30 % of 100,000 sats lost, about 18,000 left behind as uneconomical leaves. The difference lies in how each balance was split into leaves. At 10 sat/vB, exiting all his leaves would have cost 1.4 million sats. Leo's response was a rule rather than a label: "0 % / 100 % / else", and a wallet should show "an exit and a sats price tag at all times without internet".
 
 Neither test contradicts the vendors: the operators could not stop the exits. They confirm Corallo's caveat instead. Below some balance, set by the fee rate and the leaf structure, the exit is a right the user cannot afford to use.
 
@@ -68,4 +68,4 @@ Both used Spark. The difference is three things the wallet does or does not do: 
 
 ## Sources and access note
 
-X search was not available while researching this piece; individual tweets were resolved through a read-only mirror, and discovery was via web search, Stacker News, Bitcoin Magazine, the btc++ newsletter, Bitcoin Train, spark.exposed and blink.sv. The 2026-09-21/22 Francis Pouliot / Leo Wandersleb thread is cited from a summary of it.
+X search was not available while researching this piece; individual tweets were resolved through a read-only mirror, and discovery was via web search, Stacker News, Bitcoin Magazine, the btc++ newsletter, Bitcoin Train, spark.exposed and blink.sv. The 2026-09-21/22 Francis Pouliot / Leo Wandersleb thread is at <https://x.com/francispouliot_/status/2102117633139290533>.
